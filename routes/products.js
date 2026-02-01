@@ -1,80 +1,168 @@
 const express = require('express');
 const router = express.Router();
+const fs = require('fs');
+const path = require('path');
 
-// Données en mémoire (chargées au démarrage)
-let products = require('../data/products.json');
-let nextId = products.length ? Math.max(...products.map(p => p.id)) + 1 : 1;
+const productsPath = path.join(__dirname, '../data/products.json');
+const categoriesPath = path.join(__dirname, '../data/categories.json');
 
-// GET /products - liste de tous les produits
+// Fonctions utilitaires pour lire les données
+const readData = (filePath) => {
+  try {
+    const jsonData = fs.readFileSync(filePath, 'utf-8');
+    return jsonData.trim() === '' ? [] : JSON.parse(jsonData);
+  } catch (error) {
+    return [];
+  }
+};
+
+// Fonction utilitaire pour écrire les données
+const writeData = (filePath, data) => {
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (error) {
+    console.error(`Erreur d'écriture dans le fichier ${path.basename(filePath)}:`, error);
+  }
+};
+
+// Fonction de validation pour un produit
+const validateProduct = (name, price, categoryId) => {
+  if (!name || typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 100) {
+    return { valid: false, message: 'Le nom doit faire entre 2 et 100 caractères' };
+  }
+  
+  const numPrice = Number(price);
+  if (isNaN(numPrice) || numPrice <= 0) {
+    return { valid: false, message: 'Le prix doit être un nombre positif' };
+  }
+  
+  const numCategoryId = Number(categoryId);
+  if (isNaN(numCategoryId) || !Number.isInteger(numCategoryId) || numCategoryId <= 0) {
+    return { valid: false, message: "L'ID de catégorie est invalide" };
+  }
+
+  const categories = readData(categoriesPath);
+  if (!categories.some(c => c.id === numCategoryId)) {
+    return { valid: false, message: "La catégorie spécifiée n'existe pas" };
+  }
+  
+  return { valid: true };
+};
+
+// GET /products - Lister tous les produits
 router.get('/', (req, res) => {
+  const products = readData(productsPath);
   res.json(products);
 });
 
-// GET /products/:id - un produit par id
+// GET /products/:id - Récupérer un produit
 router.get('/:id', (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const product = products.find(p => p.id === id);
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'ID invalide' });
+    }
 
-  if (!product) {
-    return res.status(404).json({ message: 'Produit non trouvé' });
+    const products = readData(productsPath);
+    const product = products.find(p => p.id === id);
+
+    if (!product) {
+      return res.status(404).json({ error: 'Produit non trouvé' });
+    }
+
+    res.json(product);
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur serveur' });
   }
-
-  res.json(product);
 });
 
-// POST /products - création
+// POST /products - Créer un produit
 router.post('/', (req, res) => {
-  const { name, price, categoryId } = req.body;
+  try {
+    const { name, price, categoryId } = req.body;
+    const validation = validateProduct(name, price, categoryId);
 
-  if (!name || price == null || !categoryId) {
-    return res.status(400).json({ message: 'name, price et categoryId sont obligatoires' });
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.message });
+    }
+
+    const products = readData(productsPath);
+    const nextId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+
+    const newProduct = {
+      id: nextId,
+      name: name.trim(),
+      price: Number(price),
+      categoryId: Number(categoryId)
+    };
+
+    products.push(newProduct);
+    writeData(productsPath, products);
+
+    res.status(201).json(newProduct);
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur lors de la création' });
   }
-
-  const newProduct = {
-    id: nextId++,
-    name,
-    price: Number(price),
-    categoryId: Number(categoryId)
-  };
-
-  products.push(newProduct);
-  res.status(201).json(newProduct);
 });
 
-// PUT /products/:id - mise à jour
+// PUT /products/:id - Mettre à jour un produit
 router.put('/:id', (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const product = products.find(p => p.id === id);
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'ID invalide' });
+    }
 
-  if (!product) {
-    return res.status(404).json({ message: 'Produit non trouvé' });
+    const { name, price, categoryId } = req.body;
+    const validation = validateProduct(name, price, categoryId);
+
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.message });
+    }
+
+    const products = readData(productsPath);
+    const productIndex = products.findIndex(p => p.id === id);
+
+    if (productIndex === -1) {
+      return res.status(404).json({ error: 'Produit non trouvé' });
+    }
+
+    products[productIndex] = {
+      ...products[productIndex],
+      name: name.trim(),
+      price: Number(price),
+      categoryId: Number(categoryId)
+    };
+    
+    writeData(productsPath, products);
+    res.json(products[productIndex]);
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur lors de la mise à jour' });
   }
-
-  const { name, price, categoryId } = req.body;
-  if (!name || price == null || !categoryId) {
-    return res.status(400).json({ message: 'name, price et categoryId sont obligatoires' });
-  }
-
-  product.name = name;
-  product.price = Number(price);
-  product.categoryId = Number(categoryId);
-
-  res.json(product);
 });
 
-// DELETE /products/:id - suppression
+// DELETE /products/:id - Supprimer un produit
 router.delete('/:id', (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const index = products.findIndex(p => p.id === id);
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'ID invalide' });
+    }
 
-  if (index === -1) {
-    return res.status(404).json({ message: 'Produit non trouvé' });
+    let products = readData(productsPath);
+    const productIndex = products.findIndex(p => p.id === id);
+
+    if (productIndex === -1) {
+      return res.status(404).json({ error: 'Produit non trouvé' });
+    }
+
+    products.splice(productIndex, 1);
+    writeData(productsPath, products);
+
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur lors de la suppression' });
   }
-
-  const deleted = products.splice(index, 1)[0];
-  res.json(deleted);
 });
 
 module.exports = router;
-
-

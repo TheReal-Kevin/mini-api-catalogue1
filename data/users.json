@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "name": "kevin",
+    "email": "warmeagle2795@gmail.com",
+    "password": "$2a$10$ryjOSlLJEaFpPTAzGKYvHuBvo584dLCHjTrB29XRENZXAnBbNT3bO",
+    "joinDate": "2025-12-05"
+  },
+  {
+    "id": 2,
+    "name": "light",
+    "email": "keenwhale8537@gmail.com",
+    "password": "$2a$10$WnPP7WsXkcQSRokr4r9ZReTgyK04lnJthou8QDljMUUhfr.O6/G9G",
+    "joinDate": "2025-12-05"
+  }
+]

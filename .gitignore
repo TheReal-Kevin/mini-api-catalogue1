@@ -1,0 +1,33 @@
+# Dépendances Node.js
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Variables d'environnement
+.env
+.env.local
+.env.*.local
+
+# Cache npm
+.npm
+
+# Fichiers temporaires
+*.tmp
+*.temp
+tmp/
+
+# Éditeurs de code
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Système d'exploitation
+.DS_Store
+Thumbs.db
+
+# Cache Python (si utilisé)
+__pycache__/
+*.pyc

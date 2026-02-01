@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - Mini Catalogue</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="auth.css">
+</head>
+<body>
+    <div class="auth-container">
+        <button class="toggle-mode" onclick="toggleDarkMode()">
+            🌙
+        </button>
+
+        <div class="tab-container">
+            <button class="tab-btn active" onclick="switchTab('login')">Connexion</button>
+            <button class="tab-btn" onclick="switchTab('register')">Inscription</button>
+            <button class="tab-btn" onclick="switchTab('generator')">Générateur</button>
+        </div>
+
+        <!-- Onglet Connexion -->
+        <div id="login-tab">
+            <div id="login-message" class="message" style="display: none;"></div>
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" required placeholder="Votre email">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Mot de passe</label>
+                    <input type="password" id="login-password" required placeholder="Votre mot de passe">
+                </div>
+                <button type="submit" class="btn-primary">Se connecter</button>
+            </form>
+        </div>
+
+        <!-- Onglet Inscription -->
+        <div id="register-tab" style="display: none;">
+            <div id="register-message" class="message" style="display: none;"></div>
+            <form onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label for="register-name">Nom complet</label>
+                    <input type="text" id="register-name" required placeholder="Votre nom complet">
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" required placeholder="Votre email">
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Mot de passe</label>
+                    <input type="password" id="register-password" required placeholder="Votre mot de passe" oninput="document.getElementById('password-strength').textContent = 'Force: ' + calculateStrength(this.value)">
+                    <div id="password-strength" class="password-strength">Force: Très faible</div>
+                </div>
+                <div class="form-group">
+                    <label for="register-confirm">Confirmer le mot de passe</label>
+                    <input type="password" id="register-confirm" required placeholder="Confirmer votre mot de passe">
+                </div>
+                <button type="submit" class="btn-primary">S'inscrire</button>
+            </form>
+        </div>
+
+        <!-- Onglet Générateur -->
+        <div id="generator-tab" style="display: none;">
+            <div class="generator-section">
+                <h3>Générateur de mots de passe</h3>
+                <div class="generator-controls">
+                    <label for="password-length">Longueur :</label>
+                    <input type="number" id="password-length" min="8" max="32" value="16">
+                </div>
+                <button class="generator-btn" onclick="generatePassword()">Générer</button>
+                <div id="generator-strength" class="password-strength" style="margin-top: 0.5rem;"></div>
+                <input type="text" id="generated-password" readonly style="margin-top: 0.5rem;">
+                <button class="generator-btn" onclick="copyToClipboard()" style="margin-top: 0.5rem;">Copier</button>
+            </div>
+            <div class="generator-section">
+                <h3>Générateur d'emails</h3>
+                <div class="generator-controls">
+                    <label for="email-domain">Domaine :</label>
+                    <select id="email-domain">
+                        <option value="@gmail.com">@gmail.com</option>
+                        <option value="@yahoo.com">@yahoo.com</option>
+                        <option value="@outlook.com">@outlook.com</option>
+                        <option value="@example.com">@example.com</option>
+                    </select>
+                </div>
+                <button class="generator-btn" onclick="generateEmail()">Générer</button>
+                <input type="text" id="generated-email" readonly style="margin-top: 0.5rem;">
+                <button class="generator-btn" onclick="copyEmailToClipboard()" style="margin-top: 0.5rem;">Copier</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html>
